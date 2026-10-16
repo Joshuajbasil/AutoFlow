@@ -1,0 +1,34 @@
+import { Link as RouterLink } from 'react-router-dom';
+import { Avatar, Box, Button, Chip, Paper, Stack, Typography, Divider } from '@mui/material';
+import ArrowForward from '@mui/icons-material/ArrowForward';
+import GroupOutlined from '@mui/icons-material/GroupOutlined';
+import EngineeringOutlined from '@mui/icons-material/EngineeringOutlined';
+import VerifiedUserOutlined from '@mui/icons-material/VerifiedUserOutlined';
+import PersonOffOutlined from '@mui/icons-material/PersonOffOutlined';
+import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
+import EastRounded from '@mui/icons-material/EastRounded';
+import { useAuth } from '../context/AuthContext';
+import { useApi } from '../hooks/useApi';
+import { Failure, Loading, PageTitle, RoleChip } from '../components/Common';
+
+export default function Dashboard() {
+  const { user } = useAuth();
+  const { data, loading, error, reload } = useApi('/dashboard');
+  if (loading) return <Loading />;
+  if (error) return <Failure message={error} retry={reload} />;
+  const admin = user.role === 'admin';
+  return <>
+    <PageTitle eyebrow="WORKSHOP OVERVIEW" title={`Welcome back, ${user.name.split(' ')[0]}`} description={admin ? 'A clear view of the people who keep your workshop moving.' : 'Your workshop connection, all in one place.'} action={<Chip variant="outlined" label={new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: data.workshop.timezone }).format(new Date())} sx={{ bgcolor: 'white' }} />} />
+    <Paper sx={{ p: { xs: 3, md: 4 }, mb: 3, bgcolor: '#15243c', color: 'white', position: 'relative', overflow: 'hidden', backgroundImage: 'radial-gradient(ellipse at right bottom, #244d83, transparent 65%)' }}><Stack direction={{ xs: 'column', sm: 'row' }} gap={3} justifyContent="space-between" alignItems={{ sm: 'center' }}><Box><Stack direction="row" gap={1} alignItems="center" mb={1.5}><Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#64dab6' }} /><Typography variant="overline" sx={{ fontSize: 10, letterSpacing: 1.6, color: '#a7bcd8' }}>CONNECTED TO YOUR WORKSHOP</Typography></Stack><Typography variant="h5" mb={1}>{data.workshop.name}</Typography><Typography variant="body2" color="#bacbe1">{admin ? 'Give your team the access they need to do great work.' : user.role === 'technician' ? 'Your technician account is ready. Keep your contact details up to date.' : 'You’re connected. Keep your account details ready for your next visit.'}</Typography></Box><Button component={RouterLink} to={admin ? '/people' : '/profile'} variant="contained" endIcon={<ArrowForward />} sx={{ flexShrink: 0 }}>{admin ? 'Manage people' : 'View my account'}</Button></Stack></Paper>
+    {admin && <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(4, minmax(0, 1fr))' }, gap: 2, mb: 3 }}>{[
+      ['Customers', data.summary.customers, <GroupOutlined />, 'Registered with your workshop', '#ebf0ff', '#456de3'],
+      ['Technicians', data.summary.technicians, <EngineeringOutlined />, 'Active team members', '#e7f5f0', '#158369'],
+      ['Active accounts', data.summary.activeAccounts, <VerifiedUserOutlined />, 'Enabled workspace access', '#eaf3fc', '#347cae'],
+      ['Inactive accounts', data.summary.inactiveAccounts, <PersonOffOutlined />, 'Workspace access disabled', '#fff3e5', '#b37e35'],
+    ].map(([label, value, icon, caption, bg, color]) => <Paper variant="outlined" key={label} sx={{ p: { xs: 2, md: 2.7 } }}><Stack direction="row" justifyContent="space-between" alignItems="center"><Typography variant="body2" color="text.secondary">{label}</Typography><Avatar variant="rounded" sx={{ bgcolor: bg, color, width: 34, height: 34, '& svg': { fontSize: 19 } }}>{icon}</Avatar></Stack><Typography variant="h3" sx={{ fontSize: 34, my: 1.5 }}>{value}</Typography><Typography variant="caption" color="text.secondary">{caption}</Typography></Paper>)}</Box>}
+    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: admin ? '1.6fr 1fr' : '1fr 1fr' }, gap: 3 }}>
+      <Paper variant="outlined"><Stack direction="row" justifyContent="space-between" alignItems="center" p={2.5}><Box><Typography variant="h6" fontSize={16}>{admin ? 'Recently joined' : 'Your account'}</Typography><Typography variant="caption" color="text.secondary">{admin ? 'The latest accounts in your workshop' : 'Your details, securely connected'}</Typography></Box>{admin && <Button component={RouterLink} to="/people" size="small" endIcon={<EastRounded />}>View all</Button>}</Stack><Divider />{admin ? data.recentAccounts.map(account => <Stack key={account.id} direction="row" alignItems="center" gap={1.5} sx={{ px: 2.5, py: 2, borderBottom: '1px solid #f0f2f6' }}><Avatar sx={{ bgcolor: '#eef2fa', color: '#567095', width: 36, height: 36, fontSize: 13 }}>{account.name.split(' ').map(v => v[0]).slice(0, 2).join('')}</Avatar><Box sx={{ flex: 1, minWidth: 0 }}><Typography variant="body2" fontWeight={600}>{account.name}</Typography><Typography variant="caption" color="text.secondary" sx={{ overflowWrap: 'anywhere' }}>{account.email}</Typography></Box><RoleChip role={account.role} /></Stack>) : <Stack gap={2.3} p={3}><Box><Typography variant="caption" color="text.secondary">FULL NAME</Typography><Typography>{user.name}</Typography></Box><Box><Typography variant="caption" color="text.secondary">EMAIL ADDRESS</Typography><Typography sx={{ overflowWrap: 'anywhere' }}>{user.email}</Typography></Box><Box><Typography variant="caption" color="text.secondary">ACCESS LEVEL</Typography><Box mt={.5}><RoleChip role={user.role} /></Box></Box></Stack>}</Paper>
+      <Stack gap={3}><Paper variant="outlined" sx={{ p: 3 }}><Typography variant="h6" fontSize={16} mb={2.5}>Workspace details</Typography>{[['Workshop code', data.workshop.slug], ['Time zone', data.workshop.timezone], ['Account status', 'Active']].map(([label, value]) => <Stack key={label} direction="row" justifyContent="space-between" flexWrap="wrap" gap={1} mb={2}><Typography variant="body2" color="text.secondary">{label}</Typography><Typography variant="body2" fontWeight={600}>{value}</Typography></Stack>)}<Divider sx={{ my: 2 }} /><Stack direction="row" gap={1} alignItems="center"><CheckCircleRounded sx={{ color: 'success.main', fontSize: 17 }} /><Typography variant="caption" color="text.secondary">Access is scoped to this workshop</Typography></Stack></Paper><Paper variant="outlined" sx={{ p: 3, bgcolor: '#edf3ff', borderColor: '#dbe6ff' }}><Typography variant="subtitle2" mb={1}>Make yourself at home</Typography><Typography variant="body2" color="text.secondary" mb={2}>Check your contact details and set a password that’s unique to your account.</Typography><Button component={RouterLink} to="/profile" size="small" endIcon={<ArrowForward />} sx={{ p: 0 }}>Account settings</Button></Paper></Stack>
+    </Box>
+  </>;
+}

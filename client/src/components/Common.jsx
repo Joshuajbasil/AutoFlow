@@ -1,0 +1,7 @@
+import { Alert, Box, Button, Chip, CircularProgress, Stack, Typography } from '@mui/material';
+
+export const roleLabel = { admin: 'Administrator', technician: 'Technician', customer: 'Customer' };
+export function RoleChip({ role }) { return <Chip size="small" label={roleLabel[role]} sx={{ bgcolor: role === 'admin' ? '#edf1ff' : role === 'technician' ? '#e7f5f0' : '#f0f2f6', color: role === 'admin' ? '#3b5dcc' : role === 'technician' ? '#167b60' : '#59697f', fontWeight: 600, fontSize: 11 }} />; }
+export function Loading() { return <Stack alignItems="center" justifyContent="center" sx={{ minHeight: 220 }}><CircularProgress size={30} aria-label="Loading" /><Typography color="text.secondary" sx={{ mt: 2 }}>Loading your workspace…</Typography></Stack>; }
+export function Failure({ message, retry }) { return <Alert severity="error" action={retry ? <Button color="inherit" onClick={retry}>Retry</Button> : undefined}>{message}</Alert>; }
+export function PageTitle({ eyebrow, title, description, action }) { return <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ sm: 'center' }} gap={2} mb={3}><Box><Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.8, fontSize: 10, fontWeight: 700 }}>{eyebrow}</Typography><Typography variant="h4" sx={{ fontSize: { xs: 27, md: 32 }, mb: .7 }}>{title}</Typography><Typography color="text.secondary" variant="body2">{description}</Typography></Box>{action}</Stack>; }
